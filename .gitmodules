@@ -1,0 +1,6 @@
+[submodule "dependency/alica-messages"]
+	path = dependency/alica-messages
+	url = git@gitlab.com:uni-sst/alica-messages.git
+[submodule "dependency/capnzero-monitoring"]
+	path = dependency/capnzero-monitoring
+	url = git@github.com:dasys-lab/capnzero-monitoring.git
