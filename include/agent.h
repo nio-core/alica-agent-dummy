@@ -24,7 +24,6 @@ private:
     void sendPlanTreeInfo() const;
     void sendRoleSwitch() const;
     void sendSolverResult() const;
-    void sendSyncData() const;
     void sendSyncReady() const;
     void sendSyncTalk() const;
 };

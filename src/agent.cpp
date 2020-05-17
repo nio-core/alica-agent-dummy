@@ -12,7 +12,8 @@
 
 void handleMessage(capnp::FlatArrayMessageReader &message)
 {
-    std::cout << "Got message " << message.getRoot<capnzero::String>().getString().cStr() << std::endl;
+    const std::string msg = message.getRoot<capnzero::String>().getString().cStr();
+    std::cout << "Got message " << msg << std::endl;
 }
 
 Agent::Agent(int id, int localPort) : zmq_context(zmq_ctx_new())
@@ -54,6 +55,7 @@ Agent::~Agent()
 
 void Agent::attachListener(const std::string &listenerAddress, const std::string &listenerTopic)
 {
+    std::cout << "LOG: Connecting to listener at " << listenerAddress << " with topic [" << listenerTopic << "]" << std::endl;
     MonitorConfiguration configuration(listenerAddress, listenerTopic);
 
     EventProxy *proxy = new RelayEventProxy(zmq_context, configuration);
@@ -65,20 +67,15 @@ void Agent::attachListener(const std::string &listenerAddress, const std::string
 void Agent::run(const std::string &destination)
 {
     std::cout << "LOG: Connecting publisher to " << destination << std::endl;
+
     publisher->addAddress(destination);
 
     sendAllocationAuthorityInfo();
-
     sendEngineInfo();
-
     sendPlanTreeInfo();
-
     sendRoleSwitch();
-
     sendSolverResult();
-
     sendSyncReady();
-
     sendSyncTalk();
 }
 
@@ -92,7 +89,7 @@ void Agent::sendAllocationAuthorityInfo() const
     senderID.setType(0);
     senderID.initValue(0);
 
-    capnp::List<alica_msgs::EntrypointRobots, capnp::Kind::STRUCT>::Builder entrypointRobots = allocationAuthority.initEntrypointRobots(1);
+    capnp::List<alica_msgs::EntrypointRobots>::Builder entrypointRobots = allocationAuthority.initEntrypointRobots(1);
     alica_msgs::EntrypointRobots::Builder robot = entrypointRobots[0];
     robot.setEntrypoint(0);
     robot.initRobots(0);
