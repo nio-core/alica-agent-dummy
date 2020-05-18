@@ -27,3 +27,10 @@ target_compile_definitions(${PROJECT_NAME}
     PRIVATE
         std_cxx_17
 )
+
+install(TARGETS ${PROJECT_NAME} capnzero-monitoring alica-messages
+        LIBRARY
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        RUNTIME
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+)
