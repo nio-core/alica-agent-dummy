@@ -1,12 +1,15 @@
 FROM debian:latest
 
-RUN apt update \
-    && apt install -y wget gnupg
-
-RUN echo "deb https://download.opensuse.org/repositories/network:/messaging:/zeromq:/git-draft/Debian_10/ ./" >> /etc/apt/sources.list \
-    && wget https://download.opensuse.org/repositories/network:/messaging:/zeromq:/git-draft/Debian_10/Release.key -O- | apt-key add
+WORKDIR /opt/sample-agent
+COPY ./ /opt/sample-agent
 
 RUN apt update \
+    && apt install -y \
+    wget \
+    gnupg \
+    && echo "deb https://download.opensuse.org/repositories/network:/messaging:/zeromq:/git-draft/Debian_10/ ./" >> /etc/apt/sources.list \
+    && wget https://download.opensuse.org/repositories/network:/messaging:/zeromq:/git-draft/Debian_10/Release.key -O- | apt-key add \
+    && apt update \
     && apt install -y \
     libzmq3-dev  \
     libcapnp-dev \
@@ -16,24 +19,14 @@ RUN apt update \
     gcc \
     pkg-config \
     python3-pip \
-    && pip3 install conan
-
-RUN useradd -m agent \
-    && mkdir -p /opt/sample-agent
-
-WORKDIR /opt/sample-agent
-COPY ./ /opt/sample-agent
-
-# Build
-RUN conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan \
+    && pip3 install conan \
+    && useradd -m agent \
+    && conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan \
     && cmake . \
     && make -j4 \
     && make install \
     && ldconfig \
-    && rm -rf /opt/sample-agent
-
-# Cleanup
-RUN pip3 uninstall -y conan \
+    && pip3 uninstall -y conan \
     && apt remove -y \
     make \
     cmake \
@@ -44,8 +37,10 @@ RUN pip3 uninstall -y conan \
     gnupg\
     python3-pip \
     && apt autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+    && apt autoclean -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /opt/sample-agent
 
 USER agent
 
-CMD ["sample-agent"]
+CMD ["bash"]
