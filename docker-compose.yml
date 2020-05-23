@@ -1,0 +1,8 @@
+version: "3.7"
+services:
+    receiver:
+        build: .
+        command: ["sample-agent", "--id", "0", "--port", "6666"]
+    sender:
+        build: .
+        command: ["sample-agent", "--id", "1", "--port", "6666", "--target", "receiver:6666"]
