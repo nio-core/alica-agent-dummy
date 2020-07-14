@@ -1,23 +1,19 @@
 #pragma once
 
-#include <monitoredpublisher.h>
-#include <monitoredsubscriber.h>
+#include <capnzero/CapnZero.h>
 
 class Agent
 {
 public:
-    Agent(int id, int localPort);
+    Agent();
 
     ~Agent();
-
-    void attachListener(const std::string &listenerAddress, const std::string &listenerTopic);
 
     void run(const std::string &destinationHost);
 
 private:
     void *zmq_context;
-    MonitoredPublisher *publisher;
-    MonitoredSubscriber *subscriber;
+    capnzero::Publisher *publisher;
 
     void sendAllocationAuthorityInfo() const;
     void sendEngineInfo() const;

@@ -1,67 +1,21 @@
 #include <agent.h>
 
-#include <networksocketeventlistener.h>
-#include <relayeventproxy.h>
-#include <alica_msgs/AlicaEngineInfo.capnp.h>
-#include <alica_msgs/AllocationAuthorityInfo.capnp.h>
-#include <alica_msgs/PlanTreeInfo.capnp.h>
-#include <alica_msgs/RoleSwitch.capnp.h>
-#include <alica_msgs/SolverResult.capnp.h>
-#include <alica_msgs/SyncReady.capnp.h>
-#include <alica_msgs/SyncTalk.capnp.h>
+#include <AlicaEngineInfo.capnp.h>
+#include <AllocationAuthorityInfo.capnp.h>
+#include <PlanTreeInfo.capnp.h>
+#include <RoleSwitch.capnp.h>
+#include <SolverResult.capnp.h>
+#include <SyncReady.capnp.h>
+#include <SyncTalk.capnp.h>
 
-void handleMessage(capnp::FlatArrayMessageReader &message)
+Agent::Agent() : zmq_context(zmq_ctx_new())
 {
-    const std::string msg = message.getRoot<capnzero::String>().getString().cStr();
-    std::cout << "Got message " << msg << std::endl;
-}
-
-Agent::Agent(int id, int localPort) : zmq_context(zmq_ctx_new())
-{
-    publisher = new MonitoredPublisher(std::to_string(id) + "/0", zmq_context, capnzero::Protocol::UDP);
-    std::cout << "SETUP: Starting publisher " << std::to_string(id) << "/0" << std::endl;
-
-    subscriber = new MonitoredSubscriber(std::to_string(id) + "/1", zmq_context, capnzero::Protocol::UDP);
-    std::cout << "SETUP: Starting subscriber " << std::to_string(id) << "/1" << std::endl;
-    subscriber->addAddress("*:" + std::to_string(localPort));
-
-    subscriber->setTopic("ALLOC_AUTH");
-    std::cout << "SETUP: Subscribing to topic [ALLOC_AUTH]" << std::endl;
-
-    subscriber->setTopic("ENGINE_INFO");
-    std::cout << "SETUP: Subscribing to topic [ENGINE_INFO]" << std::endl;
-
-    subscriber->setTopic("PT_INFO");
-    std::cout << "SETUP: Subscribing to topic [PT_INFO]" << std::endl;
-
-    subscriber->setTopic("ROLE_SWITCH");
-    std::cout << "SETUP: Subscribing to topic [ROLE_SWITCH]" << std::endl;
-
-    subscriber->setTopic("SOLVER_RESULT");
-    std::cout << "SETUP: Subscribing to topic [SOLVER_RESULT]" << std::endl;
-
-    subscriber->setTopic("SYNC_READY");
-    std::cout << "SETUP: Subscribing to topic [SYNC_READY]" << std::endl;
-
-    subscriber->setTopic("SYNC_TALK");
-    std::cout << "SETUP: Subscribing to topic [SYNC_TALK]" << std::endl;
-
-    subscriber->subscribe(handleMessage);
+    publisher = new capnzero::Publisher(zmq_context, capnzero::Protocol::UDP);
 }
 
 Agent::~Agent()
 {
-}
-
-void Agent::attachListener(const std::string &listenerAddress, const std::string &listenerTopic)
-{
-    std::cout << "LOG: Connecting to listener at " << listenerAddress << " with topic [" << listenerTopic << "]" << std::endl;
-    MonitorConfiguration configuration(listenerAddress, listenerTopic);
-
-    EventProxy *proxy = new RelayEventProxy(zmq_context, configuration);
-    EventListener *listener = new NetworkSocketEventListener(proxy);
-
-    publisher->attachEventListener(listener);
+    delete publisher;
 }
 
 void Agent::run(const std::string &destination)
@@ -101,10 +55,8 @@ void Agent::sendAllocationAuthorityInfo() const
     authority.setType(0);
     authority.initValue(0);
 
-    const std::string msg = message.getRoot<alica_msgs::AllocationAuthorityInfo>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Allocation Authority Information to [ALLOC_AUTH]: " << msg << std::endl;
-    publisher->send(msg, "ALLOC_AUTH");
+    std::cout << "LOG: Sending Allocation Authority Information to [ALLOC_AUTH]" << std::endl;
+    publisher->send(message, "ALLOC_AUTH");
 }
 
 void Agent::sendEngineInfo() const
@@ -128,10 +80,8 @@ void Agent::sendEngineInfo() const
     id.setType(1);
     id.setValue(capnp::Data::Reader());
 
-    const std::string msg = message.getRoot<alica_msgs::AlicaEngineInfo>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Alica Engine Info to [ENGINE_INFO]: " << msg << std::endl;
-    publisher->send(msg, "ENGINE_INFO");
+    std::cout << "LOG: Sending Alica Engine Info to [ENGINE_INFO]" << std::endl;
+    publisher->send(message, "ENGINE_INFO");
 }
 
 void Agent::sendPlanTreeInfo() const
@@ -150,11 +100,8 @@ void Agent::sendPlanTreeInfo() const
     eps.set(0, 0);
     eps.set(1, 1);
 
-    const std::string msg = message.getRoot<alica_msgs::PlanTreeInfo>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Plan Tree Info to [PT_INFO]: " << msg << std::endl;
-
-    publisher->send(msg, "PT_INFO");
+    std::cout << "LOG: Sending Plan Tree Info to [PT_INFO]" << std::endl;
+    publisher->send(message, "PT_INFO");
 }
 
 void Agent::sendRoleSwitch() const
@@ -168,10 +115,8 @@ void Agent::sendRoleSwitch() const
 
     roleSwitch.setRoleId(0);
 
-    const std::string msg = message.getRoot<alica_msgs::RoleSwitch>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Role Switch to [ROLE_SWITCH]: " << msg << std::endl;
-    publisher->send(msg, "ROLE_SWITCH");
+    std::cout << "LOG: Sending Role Switch to [ROLE_SWITCH]" << std::endl;
+    publisher->send(message, "ROLE_SWITCH");
 }
 
 void Agent::sendSolverResult() const
@@ -189,10 +134,8 @@ void Agent::sendSolverResult() const
     capnp::List<uint8_t>::Builder values = var.initValue(1);
     values.set(0, 1);
 
-    const std::string msg = message.getRoot<alica_msgs::SolverResult>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Solver Result to [SOLVER_RESULT]: " << msg << std::endl;
-    publisher->send(msg, "SOLVER_RESULT");
+    std::cout << "LOG: Sending Solver Result to [SOLVER_RESULT]" << std::endl;
+    publisher->send(message, "SOLVER_RESULT");
 }
 
 void Agent::sendSyncReady() const
@@ -206,10 +149,8 @@ void Agent::sendSyncReady() const
 
     syncReady.setSynchronisationId(0);
 
-    const std::string msg = message.getRoot<alica_msgs::SyncReady>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Sync Ready to [SYNC_READY]: " << msg << std::endl;
-    publisher->send(msg, "SYNC_READY");
+    std::cout << "LOG: Sending Sync Ready to [SYNC_READY]" << std::endl;
+    publisher->send(message, "SYNC_READY");
 }
 
 void Agent::sendSyncTalk() const
@@ -230,8 +171,6 @@ void Agent::sendSyncTalk() const
     data.setTransitionHolds(false);
     data.setAck(true);
 
-    const std::string msg = message.getRoot<alica_msgs::SyncTalk>().toString().flatten().cStr();
-
-    std::cout << "LOG: Sending Sync Talk to [SYNC_TALK]: " << msg << std::endl;
-    publisher->send(msg, "SYNC_TALK");
+    std::cout << "LOG: Sending Sync Talk to [SYNC_TALK]" << std::endl;
+    publisher->send(message, "SYNC_TALK");
 }
