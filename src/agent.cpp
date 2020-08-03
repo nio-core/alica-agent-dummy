@@ -41,7 +41,7 @@ void Agent::sendAllocationAuthorityInfo() const
 
     capnzero::ID::Builder senderID = allocationAuthority.initSenderId();
     senderID.setType(0);
-    senderID.initValue(0);
+    senderID.setValue(kj::StringPtr("sender").asBytes());
 
     capnp::List<alica_msgs::EntrypointRobots>::Builder entrypointRobots = allocationAuthority.initEntrypointRobots(1);
     alica_msgs::EntrypointRobots::Builder robot = entrypointRobots[0];
@@ -67,8 +67,8 @@ void Agent::sendEngineInfo() const
 
     capnp::List<capnzero::ID>::Builder agentsWithMe = engineInfo.initAgentIdsWithMe(1);
     capnzero::ID::Builder agentId = agentsWithMe[0];
-    agentId.setType(0);
-    agentId.initValue(0);
+    agentId.setType(1);
+    agentId.setValue(kj::StringPtr("agent").asBytes());
 
     engineInfo.setCurrentPlan("MyPlan");
     engineInfo.setCurrentRole("MyRole");
@@ -77,8 +77,8 @@ void Agent::sendEngineInfo() const
     engineInfo.setMasterPlan("MasterPlan");
 
     capnzero::ID::Builder id = engineInfo.initSenderId();
-    id.setType(1);
-    id.setValue(capnp::Data::Reader());
+    id.setType(0);
+    id.setValue(kj::StringPtr("sender").asBytes());
 
     std::cout << "LOG: Sending Alica Engine Info to [ENGINE_INFO]" << std::endl;
     publisher->send(message, "ENGINE_INFO");
@@ -91,7 +91,7 @@ void Agent::sendPlanTreeInfo() const
     alica_msgs::PlanTreeInfo::Builder planTreeInfo = message.initRoot<alica_msgs::PlanTreeInfo>();
     capnzero::ID::Builder senderId = planTreeInfo.initSenderId();
     senderId.setType(0);
-    senderId.initValue(0);
+    senderId.setValue(kj::StringPtr("sender").asBytes());
 
     capnp::List<int64_t>::Builder stateIds = planTreeInfo.initStateIds(1);
     stateIds.set(0, 0);
@@ -111,7 +111,7 @@ void Agent::sendRoleSwitch() const
     alica_msgs::RoleSwitch::Builder roleSwitch = message.initRoot<alica_msgs::RoleSwitch>();
     capnzero::ID::Builder senderId = roleSwitch.initSenderId();
     senderId.setType(0);
-    senderId.initValue(0);
+    senderId.setValue(kj::StringPtr("sender").asBytes());
 
     roleSwitch.setRoleId(0);
 
@@ -126,7 +126,7 @@ void Agent::sendSolverResult() const
     alica_msgs::SolverResult::Builder solverResult = message.initRoot<alica_msgs::SolverResult>();
     capnzero::ID::Builder senderId = solverResult.initSenderId();
     senderId.setType(0);
-    senderId.initValue(0);
+    senderId.setValue(kj::StringPtr("sender").asBytes());
 
     capnp::List<alica_msgs::SolverVar>::Builder variables = solverResult.initVars(1);
     alica_msgs::SolverVar::Builder var = variables[0];
@@ -145,7 +145,7 @@ void Agent::sendSyncReady() const
     alica_msgs::SyncReady::Builder syncReady = message.initRoot<alica_msgs::SyncReady>();
     capnzero::ID::Builder senderId = syncReady.initSenderId();
     senderId.setType(0);
-    senderId.initValue(0);
+    senderId.setValue(kj::StringPtr("sender").asBytes());
 
     syncReady.setSynchronisationId(0);
 
@@ -159,7 +159,7 @@ void Agent::sendSyncTalk() const
     alica_msgs::SyncTalk::Builder syncTalk = message.initRoot<alica_msgs::SyncTalk>();
     capnzero::ID::Builder senderId = syncTalk.initSenderId();
     senderId.setType(0);
-    senderId.initValue(0);
+    senderId.setValue(kj::StringPtr("sender").asBytes());
 
     capnp::List<alica_msgs::SyncData>::Builder syncData = syncTalk.initSyncData(1);
     alica_msgs::SyncData::Builder data = syncData[0];
