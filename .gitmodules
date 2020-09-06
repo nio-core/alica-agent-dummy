@@ -3,4 +3,4 @@
 	url = git@github.com:sst97/capnzero.git
 [submodule "modules/alica-message-protos"]
 	path = modules/alica-message-protos
-	url = git@gitlab.com:uni-sst/alica-message-protos.git
+	url = git@github.com:DiCoreSystems/alica-message-capnps.git
