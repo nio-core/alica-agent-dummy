@@ -46,9 +46,11 @@ int main(int argc, char *argv[])
         return 2;
     }
 
+    agent.connect(args.at("target"));
+
     while (true)
     {
-        agent.run(args.at("target"));
+        agent.update();
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
 }

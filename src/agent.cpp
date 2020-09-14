@@ -18,12 +18,13 @@ Agent::~Agent()
     delete publisher;
 }
 
-void Agent::run(const std::string &destination)
+void Agent::connect(const std::string &peerAddress) {
+    std::cout << "LOG: Connecting to peer with address" << peerAddress << std::endl;
+    publisher->addAddress(peerAddress);
+}
+
+void Agent::update()
 {
-    std::cout << "LOG: Connecting publisher to " << destination << std::endl;
-
-    publisher->addAddress(destination);
-
     sendAllocationAuthorityInfo();
     sendEngineInfo();
     sendPlanTreeInfo();
@@ -114,6 +115,7 @@ void Agent::sendRoleSwitch() const
     senderId.setValue(kj::StringPtr("sender").asBytes());
 
     roleSwitch.setRoleId(0);
+    roleSwitch.setType("Type");
 
     std::cout << "LOG: Sending Role Switch to [ROLE_SWITCH]" << std::endl;
     publisher->send(message, "ROLE_SWITCH");

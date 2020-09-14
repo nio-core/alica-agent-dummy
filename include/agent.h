@@ -9,7 +9,9 @@ public:
 
     ~Agent();
 
-    void run(const std::string &destinationHost);
+    void connect(const std::string &peerAddress);
+
+    void update();
 
 private:
     void *zmq_context;
