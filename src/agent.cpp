@@ -38,23 +38,29 @@ void Agent::sendAllocationAuthorityInfo() const
 {
     capnp::MallocMessageBuilder message;
 
-    alica_msgs::AllocationAuthorityInfo::Builder allocationAuthority = message.initRoot<alica_msgs::AllocationAuthorityInfo>();
+    auto allocationAuthority = message.initRoot<alica_msgs::AllocationAuthorityInfo>();
 
-    capnzero::ID::Builder senderID = allocationAuthority.initSenderId();
+    auto senderID = allocationAuthority.initSenderId();
     senderID.setType(0);
     senderID.setValue(kj::StringPtr("sender").asBytes());
 
-    capnp::List<alica_msgs::EntrypointRobots>::Builder entrypointRobots = allocationAuthority.initEntrypointRobots(1);
-    alica_msgs::EntrypointRobots::Builder robot = entrypointRobots[0];
-    robot.setEntrypoint(0);
-    robot.initRobots(0);
+    auto entrypointRobots = allocationAuthority.initEntrypointRobots(1);
+    for(auto entrypointRobot: entrypointRobots) {
+        entrypointRobot.setEntrypoint(0);
+        auto robots = entrypointRobot.initRobots(1);
+        for(auto robot: robots) {
+            robot.setType(1);
+            robot.setValue(kj::StringPtr("robot").asBytes());
+        }
+    }
 
     allocationAuthority.setPlanId(1);
     allocationAuthority.setParentState(2);
     allocationAuthority.setPlanType(1);
-    capnzero::ID::Builder authority = allocationAuthority.initAuthority();
-    authority.setType(0);
-    authority.initValue(0);
+
+    auto authority = allocationAuthority.initAuthority();
+    authority.setType(2);
+    authority.setValue(kj::StringPtr("authority").asBytes());
 
     std::cout << "LOG: Sending Allocation Authority Information to [ALLOC_AUTH]" << std::endl;
     publisher->send(message, "ALLOC_AUTH");
@@ -64,12 +70,13 @@ void Agent::sendEngineInfo() const
 {
     capnp::MallocMessageBuilder message;
 
-    alica_msgs::AlicaEngineInfo::Builder engineInfo = message.initRoot<alica_msgs::AlicaEngineInfo>();
+    auto engineInfo = message.initRoot<alica_msgs::AlicaEngineInfo>();
 
-    capnp::List<capnzero::ID>::Builder agentsWithMe = engineInfo.initAgentIdsWithMe(1);
-    capnzero::ID::Builder agentId = agentsWithMe[0];
-    agentId.setType(1);
-    agentId.setValue(kj::StringPtr("agent").asBytes());
+    auto agentsWithMe = engineInfo.initAgentIdsWithMe(3);
+    for(auto agent: agentsWithMe) {
+        agent.setType(1);
+        agent.setValue(kj::StringPtr("agent").asBytes());
+    }
 
     engineInfo.setCurrentPlan("MyPlan");
     engineInfo.setCurrentRole("MyRole");
@@ -77,9 +84,9 @@ void Agent::sendEngineInfo() const
     engineInfo.setCurrentTask("MyTask");
     engineInfo.setMasterPlan("MasterPlan");
 
-    capnzero::ID::Builder id = engineInfo.initSenderId();
-    id.setType(0);
-    id.setValue(kj::StringPtr("sender").asBytes());
+    auto senderId = engineInfo.initSenderId();
+    senderId.setType(0);
+    senderId.setValue(kj::StringPtr("sender").asBytes());
 
     std::cout << "LOG: Sending Alica Engine Info to [ENGINE_INFO]" << std::endl;
     publisher->send(message, "ENGINE_INFO");
@@ -89,17 +96,22 @@ void Agent::sendPlanTreeInfo() const
 {
     capnp::MallocMessageBuilder message;
 
-    alica_msgs::PlanTreeInfo::Builder planTreeInfo = message.initRoot<alica_msgs::PlanTreeInfo>();
-    capnzero::ID::Builder senderId = planTreeInfo.initSenderId();
+    auto planTreeInfo = message.initRoot<alica_msgs::PlanTreeInfo>();
+    auto senderId = planTreeInfo.initSenderId();
     senderId.setType(0);
     senderId.setValue(kj::StringPtr("sender").asBytes());
 
-    capnp::List<int64_t>::Builder stateIds = planTreeInfo.initStateIds(1);
-    stateIds.set(0, 0);
+    int stateIdCount = 1;
+    auto stateIds = planTreeInfo.initStateIds(stateIdCount);
+    for(int i = 0; i < stateIdCount; i++) {
+        stateIds.set(i, i);
+    }
 
-    capnp::List<int64_t>::Builder eps = planTreeInfo.initSucceededEps(2);
-    eps.set(0, 0);
-    eps.set(1, 1);
+    int epsCount = 2;
+    auto eps = planTreeInfo.initSucceededEps(epsCount);
+    for (int i = 0; i < epsCount; i++) {
+        eps.set(i, i);
+    }
 
     std::cout << "LOG: Sending Plan Tree Info to [PT_INFO]" << std::endl;
     publisher->send(message, "PT_INFO");
@@ -125,16 +137,21 @@ void Agent::sendSolverResult() const
 {
     capnp::MallocMessageBuilder message;
 
-    alica_msgs::SolverResult::Builder solverResult = message.initRoot<alica_msgs::SolverResult>();
-    capnzero::ID::Builder senderId = solverResult.initSenderId();
+    auto solverResult = message.initRoot<alica_msgs::SolverResult>();
+    auto senderId = solverResult.initSenderId();
     senderId.setType(0);
     senderId.setValue(kj::StringPtr("sender").asBytes());
 
-    capnp::List<alica_msgs::SolverVar>::Builder variables = solverResult.initVars(1);
-    alica_msgs::SolverVar::Builder var = variables[0];
-    var.setId(0);
-    capnp::List<uint8_t>::Builder values = var.initValue(1);
-    values.set(0, 1);
+    int variableCount = 1;
+    int valueCount = 3;
+    auto variables = solverResult.initVars(variableCount);
+    for(auto var : variables) {
+        var.setId(0);
+        auto values = var.initValue(valueCount);
+        for(int i = 0; i < valueCount; i++) {
+            values.set(i, i);
+        }
+    }
 
     std::cout << "LOG: Sending Solver Result to [SOLVER_RESULT]" << std::endl;
     publisher->send(message, "SOLVER_RESULT");
@@ -158,20 +175,21 @@ void Agent::sendSyncReady() const
 void Agent::sendSyncTalk() const
 {
     capnp::MallocMessageBuilder message;
-    alica_msgs::SyncTalk::Builder syncTalk = message.initRoot<alica_msgs::SyncTalk>();
-    capnzero::ID::Builder senderId = syncTalk.initSenderId();
+    auto syncTalk = message.initRoot<alica_msgs::SyncTalk>();
+    auto senderId = syncTalk.initSenderId();
     senderId.setType(0);
     senderId.setValue(kj::StringPtr("sender").asBytes());
 
-    capnp::List<alica_msgs::SyncData>::Builder syncData = syncTalk.initSyncData(1);
-    alica_msgs::SyncData::Builder data = syncData[0];
-    capnzero::ID::Builder robotId = data.initRobotId();
-    robotId.setType(1);
-    robotId.initValue(0);
-
-    data.setTransitionId(0);
-    data.setTransitionHolds(false);
-    data.setAck(true);
+    int dataCount = 1;
+    auto syncData = syncTalk.initSyncData(dataCount);
+    for(auto data: syncData) {
+        auto robotId = data.initRobotId();
+        robotId.setType(1);
+        robotId.setValue(kj::StringPtr("sender").asBytes());
+        data.setTransitionId(0);
+        data.setTransitionHolds(false);
+        data.setAck(true);
+    }
 
     std::cout << "LOG: Sending Sync Talk to [SYNC_TALK]" << std::endl;
     publisher->send(message, "SYNC_TALK");
