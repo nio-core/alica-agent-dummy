@@ -1,8 +1,18 @@
 version: "3.7"
 services:
-    receiver:
-        build: .
-        command: ["sample-agent", "--id", "0", "--port", "6666"]
-    sender:
-        build: .
-        command: ["sample-agent", "--id", "1", "--port", "6666", "--target", "receiver:6666"]
+    agent-one:
+        image: sst/sample-agent:latest
+        command: ["sample-agent", "--target", "task-allocation-monitor:9090"]
+    agent-two:
+        image: sst/sample-agent:latest
+        command: ["sample-agent", "--target", "task-allocation-monitor:9090"]
+    task-allocation-monitor:
+        image: sst/task-allocation-monitor:latest
+        command: ["task-allocation-monitor", "-a", "0.0.0.0:9090", 
+                                             "-t", "ALLOC_AUTH",
+                                             "-t", "ENGINE_INFO",
+                                             "-t", "PT_INFO",
+                                             "-t", "SOLVER_RESULT",
+                                             "-t", "ROLE_SWITCH",
+                                             "-t", "SYNC_READY",
+                                             "-t", "SYNC_TALK"]
