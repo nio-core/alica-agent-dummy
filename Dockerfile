@@ -1,7 +1,6 @@
-FROM debian:latest
+FROM ubuntu:latest
 
-WORKDIR /opt/sample-agent
-COPY ./build /opt/sample-agent
+COPY build/sample-agent /usr/bin/
 
 RUN apt update \
     && apt install -y \
@@ -13,15 +12,13 @@ RUN apt update \
     && apt install -y \
     libzmq3-dev  \
     libcapnp-dev \
-    && mv /opt/sample-agent/sample-agent /usr/bin/ \
     && useradd -m agent \
     && apt remove -y \
     wget \
     gnupg\
     && apt autoremove -y \
     && apt autoclean -y \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /opt/sample-agent
+    && rm -rf /var/lib/apt/lists/*
 
 USER agent
 
