@@ -8,8 +8,11 @@
 #include <SyncReady.capnp.h>
 #include <SyncTalk.capnp.h>
 
-Agent::Agent() : zmq_context(zmq_ctx_new())
-{
+kj::ArrayPtr<const kj::byte> idAsBytes(const std::string& id) {
+    return kj::StringPtr(id).asBytes();
+}
+
+Agent::Agent(const std::string& id) : zmq_context(zmq_ctx_new()), id(id) {
     publisher = new capnzero::Publisher(zmq_context, capnzero::Protocol::UDP);
 }
 
@@ -42,7 +45,7 @@ void Agent::sendAllocationAuthorityInfo() const
 
     auto senderID = allocationAuthority.initSenderId();
     senderID.setType(0);
-    senderID.setValue(kj::StringPtr("sender").asBytes());
+    senderID.setValue(idAsBytes(id));
 
     auto entrypointRobots = allocationAuthority.initEntrypointRobots(1);
     for(auto entrypointRobot: entrypointRobots) {
@@ -50,7 +53,7 @@ void Agent::sendAllocationAuthorityInfo() const
         auto robots = entrypointRobot.initRobots(1);
         for(auto robot: robots) {
             robot.setType(1);
-            robot.setValue(kj::StringPtr("robot").asBytes());
+            robot.setValue(idAsBytes("robot"));
         }
     }
 
@@ -60,7 +63,7 @@ void Agent::sendAllocationAuthorityInfo() const
 
     auto authority = allocationAuthority.initAuthority();
     authority.setType(2);
-    authority.setValue(kj::StringPtr("authority").asBytes());
+    authority.setValue(idAsBytes("authority"));
 
     std::cout << "LOG: Sending Allocation Authority Information to [ALLOC_AUTH]" << std::endl;
     publisher->send(message, "ALLOC_AUTH");
@@ -75,7 +78,7 @@ void Agent::sendEngineInfo() const
     auto agentsWithMe = engineInfo.initAgentIdsWithMe(3);
     for(auto agent: agentsWithMe) {
         agent.setType(1);
-        agent.setValue(kj::StringPtr("agent").asBytes());
+        agent.setValue(idAsBytes("agent"));
     }
 
     engineInfo.setCurrentPlan("MyPlan");
@@ -86,7 +89,7 @@ void Agent::sendEngineInfo() const
 
     auto senderId = engineInfo.initSenderId();
     senderId.setType(0);
-    senderId.setValue(kj::StringPtr("sender").asBytes());
+    senderId.setValue(idAsBytes(id));
 
     std::cout << "LOG: Sending Alica Engine Info to [ENGINE_INFO]" << std::endl;
     publisher->send(message, "ENGINE_INFO");
@@ -99,7 +102,7 @@ void Agent::sendPlanTreeInfo() const
     auto planTreeInfo = message.initRoot<alica_msgs::PlanTreeInfo>();
     auto senderId = planTreeInfo.initSenderId();
     senderId.setType(0);
-    senderId.setValue(kj::StringPtr("sender").asBytes());
+    senderId.setValue(idAsBytes(id));
 
     int stateIdCount = 1;
     auto stateIds = planTreeInfo.initStateIds(stateIdCount);
@@ -124,7 +127,7 @@ void Agent::sendRoleSwitch() const
     alica_msgs::RoleSwitch::Builder roleSwitch = message.initRoot<alica_msgs::RoleSwitch>();
     capnzero::ID::Builder senderId = roleSwitch.initSenderId();
     senderId.setType(0);
-    senderId.setValue(kj::StringPtr("sender").asBytes());
+    senderId.setValue(idAsBytes(id));
 
     roleSwitch.setRoleId(0);
     roleSwitch.setType("Type");
@@ -140,7 +143,7 @@ void Agent::sendSolverResult() const
     auto solverResult = message.initRoot<alica_msgs::SolverResult>();
     auto senderId = solverResult.initSenderId();
     senderId.setType(0);
-    senderId.setValue(kj::StringPtr("sender").asBytes());
+    senderId.setValue(idAsBytes(id));
 
     int variableCount = 1;
     int valueCount = 3;
@@ -164,7 +167,7 @@ void Agent::sendSyncReady() const
     alica_msgs::SyncReady::Builder syncReady = message.initRoot<alica_msgs::SyncReady>();
     capnzero::ID::Builder senderId = syncReady.initSenderId();
     senderId.setType(0);
-    senderId.setValue(kj::StringPtr("sender").asBytes());
+    senderId.setValue(idAsBytes(id));
 
     syncReady.setSynchronisationId(0);
 
@@ -178,14 +181,14 @@ void Agent::sendSyncTalk() const
     auto syncTalk = message.initRoot<alica_msgs::SyncTalk>();
     auto senderId = syncTalk.initSenderId();
     senderId.setType(0);
-    senderId.setValue(kj::StringPtr("sender").asBytes());
+    senderId.setValue(idAsBytes(id));
 
     int dataCount = 1;
     auto syncData = syncTalk.initSyncData(dataCount);
     for(auto data: syncData) {
         auto robotId = data.initRobotId();
         robotId.setType(1);
-        robotId.setValue(kj::StringPtr("sender").asBytes());
+        robotId.setValue(idAsBytes(id));
         data.setTransitionId(0);
         data.setTransitionHolds(false);
         data.setAck(true);
