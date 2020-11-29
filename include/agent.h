@@ -5,7 +5,7 @@
 class Agent
 {
 public:
-    Agent();
+    explicit Agent(const std::string& id);
 
     ~Agent();
 
@@ -14,6 +14,7 @@ public:
     void update();
 
 private:
+    std::string id;
     void *zmq_context;
     capnzero::Publisher *publisher;
 
