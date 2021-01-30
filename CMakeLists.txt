@@ -27,6 +27,8 @@ target_compile_definitions(${PROJECT_NAME}
 )
 
 install(TARGETS ${PROJECT_NAME} capnzero
+        ARCHIVE
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         LIBRARY
             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         RUNTIME
