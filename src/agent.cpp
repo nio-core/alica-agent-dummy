@@ -19,10 +19,11 @@ Agent::Agent(const std::string& id) : zmq_context(zmq_ctx_new()), id(id) {
 Agent::~Agent()
 {
     delete publisher;
+    zmq_ctx_destroy(zmq_context);
 }
 
 void Agent::connect(const std::string &peerAddress) {
-    std::cout << "LOG: Connecting to peer with address" << peerAddress << std::endl;
+    std::cout << "LOG: Connecting to peer with address " << peerAddress << std::endl;
     publisher->addAddress(peerAddress);
 }
 

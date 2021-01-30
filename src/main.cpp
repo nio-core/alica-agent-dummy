@@ -2,20 +2,24 @@
 #include <thread>
 #include <chrono>
 #include <map>
-#include <exception>
+#include <stdexcept>
 
 std::map<std::string, std::string> parse_command_line_arguments(int argc, char *argv[])
 {
     std::map<std::string, std::string> args;
     for (int i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--target") == 0)
+        if (strcmp(argv[i], "--monitor") == 0)
         {
-            args.insert({"target", std::string(argv[++i])});
+            args.insert({"monitor", std::string(argv[++i])});
         }
         else if (strcmp(argv[i], "--id") == 0)
         {
             args.insert({"id", std::string(argv[++i])});
+        }
+        else if (strcmp(argv[i], "--update-interval") == 0)
+        {
+            args.insert({"update-interval", std::string(argv[++i])});
         }
         else
         {
@@ -28,10 +32,11 @@ std::map<std::string, std::string> parse_command_line_arguments(int argc, char *
 
 void usage()
 {
-    std::cout << "Usage: sample-agent --id <id> --target <host:port>" << std::endl
+    std::cout << "Usage: sample-agent --id <ID> --monitor <HOST:PORT> [--update-interval <INTERVAL>]" << std::endl
               << "Options:" << std::endl
-            << "\t\t--id <id>\t\tThe ID of the agent" << std::endl
-              << "\t\t--target <host:port>\t\tThe target agent to which messages are sent" << std::endl;
+              << "\t\t--id <ID>\t\tThe ID of the agent" << std::endl
+              << "\t\t--monitor <HOST:PORT>\t\tA monitor agent to which messages are sent" << std::endl
+              << "\t\t--update-interval <INTERVAL>\t\tThe time in seconds between update messages are sent" << std::endl;
 }
 
 void validate_arguments(std::map<std::string, std::string> args) {
@@ -41,15 +46,22 @@ void validate_arguments(std::map<std::string, std::string> args) {
         usage();
         throw std::runtime_error("ID missing");
     }
+}
 
+int determine_update_interval(std::map<std::string, std::string>& args)
+{
+    int default_interval = 10;
     try
     {
-        args.at("target");
+        return std::stoi(args.at("update-interval"));
     }
-    catch (const std::exception &e)
+    catch(std::out_of_range&)
     {
-        usage();
-        throw std::runtime_error("Target missing");
+        return default_interval;
+    }
+    catch(std::invalid_argument&)
+    {
+        return default_interval;
     }
 }
 
@@ -59,11 +71,14 @@ int main(int argc, char *argv[])
     validate_arguments(args);
 
     Agent agent(args.at("id"));
-    agent.connect(args.at("target"));
+    agent.connect(args.at("monitor"));
+
+    int interval = determine_update_interval(args);
+    std::chrono::seconds sleep_time(interval);
 
     while (true)
     {
         agent.update();
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(sleep_time);
     }
 }
